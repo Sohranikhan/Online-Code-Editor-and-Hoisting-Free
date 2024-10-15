@@ -7,21 +7,19 @@ import { useRouter } from 'next/navigation';
 import {
   Form,
   FormControl,
+  FormField,
   FormItem,
   FormLabel,
   FormMessage,
 } from '../ui/form';
 import { Input } from '../ui/input';
 import { Button } from '../ui/button';
-import Loader from '../Loader/Loader';
 import Link from 'next/link';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 
 const formSchema = z.object({
   name: z.string().min(3, { message: 'Name must be at least 3 characters.' }),
   email: z.string().min(5, { message: 'Please enter a valid Email address.' }).email({ message: 'Invalid email address.' }),
   password: z.string().min(8, { message: 'Password must be at least 8 characters.' }),
-  role: z.enum(['teacher', 'student', 'employee']),
 });
 
 const SignIn = () => {
@@ -40,29 +38,30 @@ const SignIn = () => {
       name: '',
       email: '',
       password: '',
-      role: 'student',
     },
   });
 
   const onSubmit = async (formData) => {
     setLoading(true);
     setError('');
-
     try {
-      const res = await fetch('/api/auth/signup', {
+      const res = await fetch('http://localhost:4000/signin', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(formData),
       });
-
-      const data = await res.json();
       setLoading(false);
-      if (data.success) {
-        router.push('/login');
-      } else {
-        setError(data.message);
+      if (res.ok) { 
+        const data = await res.json();
+        if (data.success) {
+          router.push('/login');
+        } else {
+          setError(data.message);
+        }
+      }else{
+        setError(res.text)
       }
     } catch (err) {
       setLoading(false);
@@ -71,56 +70,54 @@ const SignIn = () => {
   };
 
   if (!mounted) {
-    return <Loader />;
+    return <span className="loading loading-spinner loading-sm"></span>;
   }
 
   return (
     <div className="w-full max-w-[500px] h-auto px-3 py-4 rounded-lg shadow-2xl">
-      <h1 className="text-foreground/90 text-2xl sm:text-3xl text-center my-4 font-semibold">Create Your Account</h1>
+      <h1 className="text-2xl sm:text-3xl text-center my-4 font-semibold">Please Create Your Account</h1>
 
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-3">
-          <FormItem>
-            <FormLabel>Enter Your Name</FormLabel>
-            <FormControl>
-              <Input placeholder="Name" {...form.register('name')} />
-            </FormControl>
-            <FormMessage />
-          </FormItem>
+          <FormField
+            control={form.control}
+            name="name"
+            render={({ field }) => (
+              <FormItem >
+                <FormLabel>Enter Your Name</FormLabel>
+                <FormControl>
+                  <Input className="bg-transparent" placeholder="Name" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
 
-          <FormItem>
-            <FormLabel>Enter Your Email</FormLabel>
-            <FormControl>
-              <Input placeholder="Email" type="email" {...form.register('email')} />
-            </FormControl>
-            <FormMessage />
-          </FormItem>
+          <FormField
+            control={form.control}
+            name="email"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Enter Your Email</FormLabel>
+                <FormControl>
+                  <Input className="bg-transparent" placeholder="Email" type="email" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )} />
 
-          <FormItem>
-            <FormLabel>Enter Your Password</FormLabel>
-            <FormControl>
-              <Input placeholder="Password" type="password" {...form.register('password')} />
-            </FormControl>
-            <FormMessage />
-          </FormItem>
-
-          <FormItem>
-            <FormLabel>Select Your Role</FormLabel>
-            <FormControl>
-              <Select {...form.register('role')}>
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Select a Role" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="student">Student</SelectItem>
-                  <SelectItem value="teacher">Teacher</SelectItem>
-                  <SelectItem value="employee">Employee</SelectItem>
-                </SelectContent>
-              </Select>
-            </FormControl>
-            <FormMessage />
-          </FormItem>
-
+          <FormField
+            control={form.control}
+            name="password"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Enter Your Password</FormLabel>
+                <FormControl>
+                  <Input className="bg-transparent" placeholder="Password" type="password" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )} />
           <Button type="submit" loading={loading} className="w-full my-2">
             {loading ? 'Signing In..' : 'Sign In'}
           </Button>
